@@ -19,6 +19,8 @@ import (
 	"emojitool/cmd/get"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -39,7 +41,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	//Run: func(cmd *cobra.Command, args []string) {},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -61,6 +63,9 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.emojitool.yaml)")
+
+	rootCmd.PersistentFlags().Bool("verbose", false, "output debug logs")
+	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 
 	rootCmd.PersistentFlags().String("host", "", "misskey server domain")
 	viper.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host"))
@@ -100,4 +105,21 @@ func initConfig() {
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		fmt.Println("config file changed: ", e.Name)
 	})
+
+	// loger setup
+	config := zap.NewProductionConfig()
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.TimeKey = "timestamp"
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.EncoderConfig = encoderConfig
+
+	if viper.GetBool("verbose") {
+		config.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+	} else {
+		config.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
+	}
+
+	logger, _ := config.Build(zap.AddCallerSkip(1))
+	defer logger.Sync()
+	zap.ReplaceGlobals(logger)
 }
