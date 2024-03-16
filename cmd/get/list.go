@@ -76,18 +76,21 @@ to quickly create a Cobra application.`,
 				panic(fmt.Sprintf("emojiFile create failed:  %+v", err))
 			}
 			emojiWriter := csv.NewWriter(emojiFile)
+			defer emojiWriter.Flush()
 
 			aliasesFile, err := os.Create("aliases.csv")
 			if err != nil {
 				panic(fmt.Sprintf("aliasesFile create failed:  %+v", err))
 			}
 			aliasesWriter := csv.NewWriter(aliasesFile)
+			defer aliasesWriter.Flush()
 
 			rolesFile, err := os.Create("roles.csv")
 			if err != nil {
 				panic(fmt.Sprintf("rolesFile create failed:  %+v", err))
 			}
 			rolesWriter := csv.NewWriter(rolesFile)
+			defer rolesWriter.Flush()
 
 			// emoji.csv header
 			err = emojiWriter.Write([]string{
@@ -144,10 +147,6 @@ to quickly create a Cobra application.`,
 				}
 			}
 
-			// flush
-			emojiWriter.Flush()
-			aliasesWriter.Flush()
-			rolesWriter.Flush()
 		}
 	},
 }
