@@ -13,13 +13,16 @@ func Request(endpoint string, body interface{}) (*http.Response, error) {
 	if err != nil {
 		return nil, errors.New("failed to marshal body: " + err.Error())
 	}
+	return RequestRaw(endpoint, "application/json", bytes.NewBuffer(jsonBody))
+}
 
+func RequestRaw(endpoint string, contentType string, body *bytes.Buffer) (*http.Response, error) {
 	// リクエストを作成
-	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequest("POST", endpoint, body)
 	if err != nil {
 		return nil, errors.New("failed to create request: " + err.Error())
 	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", contentType)
 
 	// リクエストを送信
 	client := &http.Client{}
