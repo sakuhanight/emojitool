@@ -17,10 +17,13 @@ package get
 
 import (
 	"emojitool/misskey"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"io"
+	"os"
 )
 
 // listCmd represents the list command
@@ -42,13 +45,110 @@ to quickly create a Cobra application.`,
 		res, err := misskey.Request(endpoint, body)
 		defer res.Body.Close()
 
-		var result map[string]interface{}
-		err = json.NewDecoder(res.Body).Decode(&result)
+		resBody, err := io.ReadAll(res.Body)
 		if err != nil {
 			panic(fmt.Sprintf("%+v", err))
 		}
 
-		fmt.Printf("%+v", result)
+		if cmd.Flags().Lookup("type").Value.String() == "json" {
+			fmt.Printf("%s\n", resBody)
+		} else if cmd.Flags().Lookup("type").Value.String() == "csv" {
+			type emoji struct {
+				Aliases                                 []string `json:"aliases"`
+				Name                                    string   `json:"name"`
+				Category                                string   `json:"category"`
+				Url                                     string   `json:"url"`
+				LocalOnly                               bool     `json:"localOnly"`
+				IsSensitive                             bool     `json:"isSensitive"`
+				RoleIdsThatCanBeUsedThisEmojiAsReaction []string `json:"roleIdsThatCanBeUsedThisEmojiAsReaction"`
+			}
+			var result struct {
+				Emojis []emoji `json:"emojis"`
+			}
+
+			err = json.Unmarshal(resBody, &result)
+			if err != nil {
+				panic(fmt.Sprintf("%+v", err))
+			}
+
+			emojiFile, err := os.Create("emojis.csv")
+			if err != nil {
+				panic(fmt.Sprintf("emojiFile create failed:  %+v", err))
+			}
+			emojiWriter := csv.NewWriter(emojiFile)
+
+			aliasesFile, err := os.Create("aliases.csv")
+			if err != nil {
+				panic(fmt.Sprintf("aliasesFile create failed:  %+v", err))
+			}
+			aliasesWriter := csv.NewWriter(aliasesFile)
+
+			rolesFile, err := os.Create("roles.csv")
+			if err != nil {
+				panic(fmt.Sprintf("rolesFile create failed:  %+v", err))
+			}
+			rolesWriter := csv.NewWriter(rolesFile)
+
+			// emoji.csv header
+			err = emojiWriter.Write([]string{
+				"Name",
+				"Category",
+				"Url",
+				"LocalOnly",
+				"IsSensitive",
+			})
+			if err != nil {
+				panic(fmt.Sprintf("emoji.csv header write failed:  %+v", err))
+			}
+
+			// aliases.csv header
+			err = aliasesWriter.Write([]string{
+				"Name",
+				"Alias",
+			})
+			if err != nil {
+				panic(fmt.Sprintf("aliases.csv header write failed:  %+v", err))
+			}
+
+			// roles.csv header
+			err = rolesWriter.Write([]string{
+				"Name",
+				"Role",
+			})
+			if err != nil {
+				panic(fmt.Sprintf("roles.csv header write failed:  %+v", err))
+			}
+
+			// slice processing
+			for _, emoji := range result.Emojis {
+				emojiWriter.Write([]string{
+					emoji.Name,
+					emoji.Category,
+					emoji.Url,
+					fmt.Sprintf("%v", emoji.LocalOnly),
+					fmt.Sprintf("%v", emoji.IsSensitive),
+				})
+
+				for _, alias := range emoji.Aliases {
+					aliasesWriter.Write([]string{
+						emoji.Name,
+						alias,
+					})
+				}
+
+				for _, role := range emoji.RoleIdsThatCanBeUsedThisEmojiAsReaction {
+					rolesWriter.Write([]string{
+						emoji.Name,
+						role,
+					})
+				}
+			}
+
+			// flush
+			emojiWriter.Flush()
+			aliasesWriter.Flush()
+			rolesWriter.Flush()
+		}
 	},
 }
 
