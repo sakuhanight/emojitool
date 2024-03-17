@@ -12,36 +12,13 @@ import (
 )
 
 func UploadExample(host string, token string, path string) (*http.Response, error) {
-	filename := filepath.Base(path)
 	endpoint := fmt.Sprintf("https://%s/api/drive/files/create", host)
-
-	file, err := os.Open(path)
-	if err != nil {
-		zap.S().Panicf("Could not open '%s': %v", path, err)
-	}
-
-	body := &bytes.Buffer{}
-
-	mw := multipart.NewWriter(body)
-
-	{
-		tokenPart, _ := mw.CreateFormField("i")
-		_, err = tokenPart.Write([]byte(token))
-		if err != nil {
-			zap.S().Panicf("CreatePart Failed")
-		}
-	}
-	{
-		filePart, _ := mw.CreateFormFile("file", filename)
-		_, err = io.Copy(filePart, file)
-		if err != nil {
-			zap.S().Panicf("CreatePart Failed")
-		}
-	}
-
-	mw.Close()
-
-	return RequestRaw(endpoint, mw.FormDataContentType(), body)
+	zap.S().Debugln("UploadExample called")
+	return MultipartRequest(endpoint,
+		SetMultipartField("i", []byte(token)),
+		SetMultipartField("force", []byte("true")),
+		SetMultipartFile("file", path),
+	)
 }
 
 type (
@@ -49,11 +26,14 @@ type (
 )
 
 func MultipartRequest(endpoint string, options ...MultipartRequestOption) (*http.Response, error) {
+	zap.S().Debugln("MultipartRequest called")
 	body := &bytes.Buffer{}
 	w := multipart.NewWriter(body)
 	for _, opt := range options {
 		opt(w)
 	}
+	zap.S().Debugln("MultipartRequest for end")
+
 	return RequestRaw(endpoint, w.FormDataContentType(), body)
 }
 
