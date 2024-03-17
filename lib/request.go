@@ -1,4 +1,4 @@
-package misskey
+package lib
 
 import (
 	"bytes"

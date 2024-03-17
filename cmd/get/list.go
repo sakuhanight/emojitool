@@ -16,7 +16,7 @@ limitations under the License.
 package get
 
 import (
-	"emojitool/misskey"
+	"emojitool/lib"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -42,7 +42,7 @@ to quickly create a Cobra application.`,
 		endpoint := fmt.Sprintf("https://%s/api/emojis", host)
 		body := map[string]interface{}{}
 
-		res, err := misskey.Request(endpoint, body)
+		res, err := lib.Request(endpoint, body)
 		defer res.Body.Close()
 
 		resBody, err := io.ReadAll(res.Body)

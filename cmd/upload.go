@@ -17,7 +17,7 @@ package cmd
 
 import (
 	"bytes"
-	"emojitool/misskey"
+	"emojitool/lib"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -71,7 +71,7 @@ to quickly create a Cobra application.`,
 
 		mw.Close()
 
-		res, _ := misskey.RequestRaw(endpoint, mw.FormDataContentType(), body)
+		res, _ := lib.RequestRaw(endpoint, mw.FormDataContentType(), body)
 		defer res.Body.Close()
 
 		resBody, err := io.ReadAll(res.Body)
