@@ -14,11 +14,12 @@ import (
 func UploadExample(host string, token string, path string) (*http.Response, error) {
 	endpoint := fmt.Sprintf("https://%s/api/drive/files/create", host)
 	zap.S().Debugln("UploadExample called")
-	return MultipartRequest(endpoint,
-		SetMultipartField("i", []byte(token)),
-		SetMultipartField("force", []byte("true")),
-		SetMultipartFile("file", path),
-	)
+	var options []MultipartRequestOption
+	options = append(options, SetMultipartField("i", []byte(token)))
+	options = append(options, SetMultipartField("force", []byte("true")))
+	options = append(options, SetMultipartFile("file", path))
+
+	return MultipartRequest(endpoint, options...)
 }
 
 type (
