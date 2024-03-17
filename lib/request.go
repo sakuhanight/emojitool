@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -25,7 +26,14 @@ func RequestRaw(endpoint string, contentType string, body *bytes.Buffer) (*http.
 	req.Header.Set("Content-Type", contentType)
 
 	// リクエストを送信
+	zap.S().Debugln("RequestRaw request send")
 	client := &http.Client{}
 	res, err := client.Do(req)
+	if err != nil {
+		zap.S().Fatalln("RequestRaw request send failed: %+v", err)
+	}
+	zap.S().Debugf("RequestRaw result; %+v", res)
+
+	zap.S().Debugln("RequestRaw end")
 	return res, err
 }
