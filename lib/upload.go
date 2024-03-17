@@ -32,6 +32,10 @@ func MultipartRequest(endpoint string, options ...MultipartRequestOption) (*http
 	for _, opt := range options {
 		opt(w)
 	}
+	err := w.Close()
+	if err != nil {
+		zap.S().Fatalf("MultipartRequest writer close failed: %+v", err)
+	}
 	zap.S().Debugln("MultipartRequest for end")
 
 	return RequestRaw(endpoint, w.FormDataContentType(), body)
