@@ -90,6 +90,7 @@ func initConfig() {
 
 		// Search config in home directory with name ".emojitool" (without extension).
 		viper.AddConfigPath(home)
+		viper.AddConfigPath(".")
 		viper.SetConfigType("yaml")
 		viper.SetConfigName(".emojitool")
 	}
